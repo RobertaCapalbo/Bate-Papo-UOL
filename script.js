@@ -16,40 +16,45 @@ function sair(){
 }
 
 // API entrar na sala:
-
+let nomeParticipante = '';
 function entrarNaSala(){
-
-    const promise = axios.post('https://mock-api.driven.com.br/api/v6/uol/participants');
+    nomeParticipante = { name: document.querySelector('.nome').value};
+    console.log(nomeParticipante);
+    carregarLoading();
+    const promise = axios.post('https://mock-api.driven.com.br/api/v6/uol/participants', nomeParticipante );
     promise.then(entrou);
     promise.catch(nãoEntrou);
 
 }
 
+function carregarLoading(){
+    const divEntrar = document.querySelector('.nomeEBotao');
+    divEntrar.innerHTML = '<img class="loading" src="Imagens/loading.gif" alt="loading" />';
+    divEntrar.classList.add('margin');
+}
+
 function entrou(resposta){
     console.log('Você entrou na sala. Seja bem-vindo(a)!');
     console.log(resposta);
+    entrar();
+    setInterval(manterConexão(),5000)
 }
 
-function nãoEntrou(erro){
-    console.log('Poxa, não foi possível entrar na sala. Tente novamente!');
-    console.log(erro);
+function nãoEntrou(resposta){
+    if (resposta.response.status === 400){
+    alert('Poxa, o nome já escolhido já existe. Tente novamente com outro!')
+    } else {
+        alert ('Poxa, não foi possível entrar na sala. Tente novamente!')
+    }
 }
 
 // API para manter a conexão:
 
-setTimeout(function manterConexão(){
+function manterConexão(){
 
-    const promise = axios.post('https://mock-api.driven.com.br/api/v6/uol/status');
-    promise.then(conectado);
+    const promise = axios.post('https://mock-api.driven.com.br/api/v6/uol/status', nomeParticipante);
     promise.catch(nãoConectado);
-
-}, 5000)
-
-function conectado(resposta){
-    console.log('Você está conectado(a)');
-    console.log(resposta);
 }
-
 function nãoConectado(erro){
     console.log('Poxa, não foi possível conectar. Tente novamente!');
     console.log(erro);
