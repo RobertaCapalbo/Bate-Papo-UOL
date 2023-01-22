@@ -19,7 +19,6 @@ function sair(){
 let nomeParticipante = '';
 function entrarNaSala(){
     nomeParticipante = { name: document.querySelector('.nome').value};
-    console.log(nomeParticipante);
     carregarLoading();
     const promise = axios.post('https://mock-api.driven.com.br/api/v6/uol/participants', nomeParticipante );
     promise.then(entrou);
@@ -35,7 +34,6 @@ function carregarLoading(){
 
 function entrou(resposta){
     console.log('Você entrou na sala. Seja bem-vindo(a)!');
-    console.log(resposta);
     entrar();
     setInterval(function (){
         manterConexão()
@@ -63,7 +61,6 @@ function manterConexão(){
 }
 function nãoConectado(erro){
     console.log('Poxa, não foi possível conectar. Tente novamente!');
-    console.log(erro);
 }
 
 // API para buscar mensagem no servidor:
@@ -77,8 +74,6 @@ function buscarMensagens(){
 }
 
 function encontrou(resposta){
-    console.log('Mensagens encontradas!');
-    console.log(resposta.data);
     const arrayMensagem = resposta.data;
     const chat = document.querySelector('.chat');
     chat.innerHTML = '';
@@ -105,27 +100,38 @@ function encontrou(resposta){
 
 function nãoEncontrou(erro){
     console.log('Poxa, não foi possível encontrar as mensagens. Tente novamente!');
-    console.log(erro);
 }
 
 // API para enviar mensagens:
 
 function enviarMensagens(){
-
-    const promise = axios.post('https://mock-api.driven.com.br/api/v6/uol/messages');
+    let mensagemModelo = {
+        from: nomeParticipante.name,
+        to: "Todos",
+        text: document.querySelector('.mensagem').value,
+        type: "message"
+    };
+    const promise = axios.post('https://mock-api.driven.com.br/api/v6/uol/messages', mensagemModelo);
     promise.then(enviou);
     promise.catch(nãoEnviou);
-
+    document.querySelector('.mensagem').value = '';
 }
+    let input = document.querySelector('.mensagem');
+    input.addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+    event.preventDefault();
+    enviarMensagens();
+    }
+})
 
 function enviou(resposta){
-    console.log('Mensagem enviada!');
-    console.log(resposta);
+    buscarMensagens()
 }
 
 function nãoEnviou(erro){
     console.log('Poxa, não foi possível enviar a sua mensagem. Tente novamente!');
-    console.log(erro);
+    alert('Você foi desconectado. Entre novamente!');
+    window.location.reload();
 }
 
 // API para buscar a lista de participantes:
@@ -140,10 +146,8 @@ function buscarParticipantes(){
 
 function encontrouParticipantes(resposta){
     console.log('Participantes encontrados!');
-    console.log(resposta);
 }
 
 function nãoEncontrouParticipantes(erro){
     console.log('Poxa, não foi possível encontrar os participantes. Tente novamente!');
-    console.log(erro);
 }

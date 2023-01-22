@@ -122,6 +122,8 @@ color: #AEAEAE;
     z-index:10;
     width:100vw;
     height:100vh;
+    top:0px;
+    left:0px;
 }
 
 .fundo{
@@ -206,7 +208,7 @@ color: #000000;
 
 .chat {
     margin-top: 108px;
-    margin-bottom: 84px;
+    margin-bottom: 82px;
 }
 
 .chat div {
