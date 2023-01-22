@@ -37,7 +37,13 @@ function entrou(resposta){
     console.log('Você entrou na sala. Seja bem-vindo(a)!');
     console.log(resposta);
     entrar();
-    setInterval(manterConexão(),5000)
+    setInterval(function (){
+        manterConexão()
+    },5000)
+    buscarMensagens();
+    setInterval(function(){
+        buscarMensagens()
+    },3000)
 }
 
 function nãoEntrou(resposta){
@@ -72,7 +78,29 @@ function buscarMensagens(){
 
 function encontrou(resposta){
     console.log('Mensagens encontradas!');
-    console.log(resposta);
+    console.log(resposta.data);
+    const arrayMensagem = resposta.data;
+    const chat = document.querySelector('.chat');
+    chat.innerHTML = '';
+    for(let i=0; i<arrayMensagem.length; i++){
+    const remetente = arrayMensagem[i].from;
+    const mensagem = arrayMensagem[i].text;
+    const tempo = arrayMensagem[i].time;
+    const para = arrayMensagem[i].to;
+    const tipo = arrayMensagem[i].type;
+    const resultadoCondicional = para === nomeParticipante.name || remetente === nomeParticipante.name
+    if (tipo === 'private_message' && resultadoCondicional) {
+    chat.innerHTML = chat.innerHTML + '<div class="reservadamente"><span>('+tempo+')</span> <b>'+remetente+'</b> reservadamente para <b>'+para+'</b>: '+mensagem+'</div>';
+    }
+    if (tipo === 'status'){
+        chat.innerHTML = chat.innerHTML + '<div class="status"><span>('+tempo+')</span>  <b>'+remetente+'</b>  '+mensagem+'</div>'
+    }
+    if (tipo === 'message'){
+        chat.innerHTML = chat.innerHTML + '<div class="publico"><span>('+tempo+')</span> <b>'+remetente+'</b> para <b>'+para+'</b>:  '+mensagem+'</div>'
+    }
+    }
+    const ultimoElemento = chat.lastChild;
+    ultimoElemento.scrollIntoView();
 }
 
 function nãoEncontrou(erro){
@@ -102,7 +130,7 @@ function nãoEnviou(erro){
 
 // API para buscar a lista de participantes:
 
-function buscarMensagens(){
+function buscarParticipantes(){
 
     const promise = axios.get('https://mock-api.driven.com.br/api/v6/uol/participants');
     promise.then(encontrouParticipantes);
