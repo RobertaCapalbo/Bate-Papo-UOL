@@ -42,6 +42,11 @@ function entrou(resposta){
     setInterval(function(){
         buscarMensagens()
     },3000)
+    buscarParticipantes()
+    setInterval(function(){
+        buscarParticipantes()
+    },10000)
+    informacaoMensagem()
 }
 
 function nãoEntrou(resposta){
@@ -50,6 +55,7 @@ function nãoEntrou(resposta){
     } else {
         alert ('Poxa, não foi possível entrar na sala. Tente novamente!')
     }
+    window.location.reload()
 }
 
 // API para manter a conexão:
@@ -85,13 +91,13 @@ function encontrou(resposta){
     const tipo = arrayMensagem[i].type;
     const resultadoCondicional = para === nomeParticipante.name || remetente === nomeParticipante.name
     if (tipo === 'private_message' && resultadoCondicional) {
-    chat.innerHTML = chat.innerHTML + '<div class="reservadamente"><span>('+tempo+')</span> <b>'+remetente+'</b> reservadamente para <b>'+para+'</b>: '+mensagem+'</div>';
+    chat.innerHTML = chat.innerHTML + '<div class="reservadamente" data-test="message"><span>('+tempo+')</span> <b>'+remetente+'</b> reservadamente para <b>'+para+'</b>: '+mensagem+'</div>';
     }
     if (tipo === 'status'){
-        chat.innerHTML = chat.innerHTML + '<div class="status"><span>('+tempo+')</span>  <b>'+remetente+'</b>  '+mensagem+'</div>'
+        chat.innerHTML = chat.innerHTML + '<div class="status" data-test="message"><span>('+tempo+')</span>  <b>'+remetente+'</b>  '+mensagem+'</div>'
     }
     if (tipo === 'message'){
-        chat.innerHTML = chat.innerHTML + '<div class="publico"><span>('+tempo+')</span> <b>'+remetente+'</b> para <b>'+para+'</b>:  '+mensagem+'</div>'
+        chat.innerHTML = chat.innerHTML + '<div class="publico" data-test="message"><span>('+tempo+')</span> <b>'+remetente+'</b> para <b>'+para+'</b>:  '+mensagem+'</div>'
     }
     }
     const ultimoElemento = chat.lastChild;
@@ -107,9 +113,9 @@ function nãoEncontrou(erro){
 function enviarMensagens(){
     let mensagemModelo = {
         from: nomeParticipante.name,
-        to: "Todos",
+        to: destinatarioSelecionado,
         text: document.querySelector('.mensagem').value,
-        type: "message"
+        type: tipoMensagem
     };
     const promise = axios.post('https://mock-api.driven.com.br/api/v6/uol/messages', mensagemModelo);
     promise.then(enviou);
@@ -137,17 +143,96 @@ function nãoEnviou(erro){
 // API para buscar a lista de participantes:
 
 function buscarParticipantes(){
-
     const promise = axios.get('https://mock-api.driven.com.br/api/v6/uol/participants');
     promise.then(encontrouParticipantes);
     promise.catch(nãoEncontrouParticipantes);
-
 }
 
 function encontrouParticipantes(resposta){
-    console.log('Participantes encontrados!');
+    let arrayParticipantes = resposta.data
+    let nomesParticipantes = document.querySelector('ul').innerHTML;
+    document.querySelector('ul').innerHTML = '';
+    if (destinatarioSelecionado === 'Todos'){
+        document.querySelector('ul').innerHTML = `<li class="ion selecionado all" onclick="destinatario(this)" data-test="all">
+        <ion-icon name="people"></ion-icon>
+        <p class="todos pessoa">Todos</p>
+        <div class="check">
+        <ion-icon name="checkmark-outline"></ion-icon>
+        </div>
+    </li>`
+    } else {
+        document.querySelector('ul').innerHTML = `<li class="ion all" onclick="destinatario(this)" data-test="all">
+        <ion-icon name="people"></ion-icon>
+        <p class="todos pessoa">Todos</p>
+        <div class="check">
+        <ion-icon name="checkmark-outline"></ion-icon>
+        </div>
+    </li>`
+    }
+    for(let i=0; i < arrayParticipantes.length; i++){
+    const nome = arrayParticipantes[i].name;
+    if (nome === destinatarioSelecionado){
+        document.querySelector('ul').innerHTML += `<li class="lista selecionado" onclick="destinatario(this)" data-test="participant">
+        <ion-icon name="person-circle-outline"></ion-icon>
+        <div class="pessoa">${nome}</div>
+        <div class="check"><ion-icon name="checkmark-outline" data-test="check"></ion-icon></div>
+        </li>` 
+    } else {
+        document.querySelector('ul').innerHTML += `<li class="lista" onclick="destinatario(this)" data-test="participant">
+    <ion-icon name="person-circle-outline"></ion-icon>
+    <div class="pessoa">${nome}</div>
+    <div class="check"><ion-icon name="checkmark-outline" data-test="check"></ion-icon></div>
+    </li>`
+    }
+    }
+    if (document.querySelector('.primeira-metade').querySelector('.selecionado')===null){
+        document.querySelector('.all').classList.add('selecionado');
+        destinatarioSelecionado = 'Todos';
+        informacaoMensagem()
+    } 
 }
 
 function nãoEncontrouParticipantes(erro){
     console.log('Poxa, não foi possível encontrar os participantes. Tente novamente!');
+}
+
+// função selecionar destinatário
+let destinatarioSelecionado = 'Todos';
+function destinatario(destinatarioThis){
+    const destinatarioAntes = document.querySelector('.primeira-metade').querySelector('.selecionado');
+    if(destinatarioThis.querySelector('.pessoa').innerHTML === nomeParticipante.name){
+      return;
+    }
+    if (destinatarioThis.querySelector('.pessoa').innerHTML === 'Todos'){
+      destinatarioAntes.classList.remove('selecionado');
+      document.querySelector('.all').classList.add('selecionado');
+      destinatarioSelecionado = 'Todos';
+    } else if (destinatarioThis.querySelector('.pessoa').innerHTML !== destinatarioSelecionado){
+    destinatarioAntes.classList.remove('selecionado');
+    destinatarioThis.classList.add('selecionado');
+    destinatarioSelecionado = destinatarioThis.querySelector('.pessoa').innerHTML;
+ }
+ informacaoMensagem()
+}
+
+// função selecionar reservadamente ou público
+let tipoMensagem = 'message';
+function selecionar(selecionarThis){
+    const selecionados = document.querySelector('.segunda-metade .selecionado');
+    selecionados.classList.remove('selecionado');
+    selecionarThis.classList.add('selecionado');
+    if(selecionarThis.querySelector('p').innerHTML === 'Público'){
+      tipoMensagem = 'message';
+    } else {
+        tipoMensagem = 'private_message';
+    }
+    informacaoMensagem()
+}
+
+// função para descrição da mensagem 
+function informacaoMensagem(){
+    if(tipoMensagem === 'message'){
+    document.querySelector('.informacaoMensagem').innerHTML = "Enviando para "+ destinatarioSelecionado;
+} else {document.querySelector('.informacaoMensagem').innerHTML = "Enviando para "+ destinatarioSelecionado+" (reservadamente)";
+}
 }
